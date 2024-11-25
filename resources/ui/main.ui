@@ -219,7 +219,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap>../images/happy.jpg</pixmap>
+      <pixmap>../images/positivo.png</pixmap>
      </property>
      <property name="scaledContents">
       <bool>true</bool>

@@ -41,7 +41,7 @@ class AnalisisVozInterface(QThread):
         self.processor = WhisperProcessor.from_pretrained(modelo_huggingFace) # Procesador para _tokenizar_ el audio
         self.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language="es", task="transcribe") # Configuraciones del modelo, "en" Ingles, "es" Espanol
 
-        self.sentimientos_analyzer = create_analyzer(task="sentiment", lang="es") # Analizador de sentimientos
+        self.sentimientos_analyzer = create_analyzer(task="sentiment", lang="en") # Analizador de sentimientos
 
         self.traductor = Translator() # Traductor de idiomas
 
@@ -167,6 +167,12 @@ class AnalisisVozInterface(QThread):
         similitud = self.comparar_texto_archivo(self.transcripcion, direccion_audio)
         print(f"Calculo de similitud: {similitud}%")
 
+
+    def mostrar_resultados(self):
+        """Muestra los resultados de transcripción, traducción y emoción"""
+        print(f"Transcripción: {self.texto_actual}")
+        print(f"Traducción: {self.texto_traducido}")
+        print(f"Emoción: {self.emocion_actual}")
 
     #
     # Funciones de utilidad interna

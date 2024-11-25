@@ -1,12 +1,43 @@
 import concurrent
+import queue
+import random
 import threading
+import time
 
 import mpipe
+import numpy as np
 from AnalisisVozInterfaz import AnalisisVozInterface
 
 import pyaudio
 
 import os
+
+from audioProPipe import AnalisisVoz_Paralelo_MPipe
+
+class AnalisisVoz_Dummy(AnalisisVozInterface):
+
+    def proceso_main(self):
+
+        self.iniciado = True
+        emociones_random = ["NEU", "NEG", "POS"]
+        palabras_random = ["perfil", "paquete", "capa", "tramposo", "castillo", "skibidi", "preferencia", "seguir", "gato", "CUANTICO", "coro"]
+        rate = 0
+        largo = 0
+        traduccion = ""
+        while self.iniciado:
+            rate = random.randint(1,4)
+            largo = random.randint(3,6)
+            time.sleep(rate)
+
+            self.texto_actual = ""
+            for i in range(largo):
+                traduccion = traduccion + random.choice(palabras_random) + " "
+            
+            self.texto_actual = traduccion
+            self.texto_traducido = traduccion[::-1]
+            self.emocionActual = random.choice(emociones_random)
+
+            self.texto_Actual_Compartido = self.texto_actual
 
 class AnalisisVoz_Secuencial(AnalisisVozInterface):
 
@@ -35,7 +66,6 @@ class AnalisisVoz_Secuencial(AnalisisVozInterface):
                     print("| Reconocimiento de emociones: ", end='')
                     self.emocion_actual = self.reconocer_emociones(self.texto_actual)
                     print(self.emocion_actual)
-
 
                 else:
                     self.iniciado = False
@@ -116,56 +146,6 @@ class AnalisisVoz_Paralelo_Features(AnalisisVozInterface):
 
         except KeyboardInterrupt:
             print("Deteniendo transcripción desde el micrófono.")
-
-    def mostrar_resultados(self):
-        """Muestra los resultados de transcripción, traducción y emoción"""
-        print(f"Transcripción: {self.texto_actual}")
-        print(f"Traducción: {self.texto_traducido}")
-        print(f"Emoción: {self.emocion_actual}")
-
-class AnalisisVoz_Paralelo_MPipe(AnalisisVozInterface):
-
-    def __init__(self, pyaudio_ref):
-        super().__init__(pyaudio_ref)
-        self.iniciado = False
-        self.lock = threading.Lock()  # Para sincronizar el acceso a las variables compartidas
-    
-    def proceso_main(self):
-        """Funcion para iniciar la transcripción usando el microfono como constante entrada de audio"""
-        
-        
-        self.iniciado = True
-        stage1 = mpipe.OrderedStage(self.obtener_audio)
-        stage2 = mpipe.OrderedStage(self.transcribir_audio)
-        stage3 = mpipe.OrderedStage(self.traducir_texto)
-        stage4 = mpipe.OrderedStage(self.reconocer_emociones)
-        stage1.link(stage2)
-        stage2.link(stage3)
-        stage2.link(stage4)
-        pipe = mpipe.Pipeline(stage1)
-        
-        try:
-            while self.iniciado:
-                audio_data = self.obtener_audio()  # Obtienes los datos de audio (chunk)
-                
-                if audio_data is not None:
-                    pipe.put(audio_data)
-                    pipe.put(None)
-                    
-                    result = pipe.get()
-                    print(result)
-                    
-                else:
-                    self.iniciado = False
-
-        except KeyboardInterrupt:
-            print("Deteniendo transcripción desde el micrófono.")
-
-    def mostrar_resultados(self):
-        """Muestra los resultados de transcripción, traducción y emoción"""
-        print(f"Transcripción: {self.texto_actual}")
-        print(f"Traducción: {self.texto_traducido}")
-        print(f"Emoción: {self.emocion_actual}")
 
 
 # Funcion Main
