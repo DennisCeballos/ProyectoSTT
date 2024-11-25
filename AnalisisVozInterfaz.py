@@ -55,9 +55,10 @@ class AnalisisVozInterface(QThread):
 
         self.emocion_actual: str = ""
         self.texto_actual: str = ""
+        self.texto_traducido: str = ""
 
         self.transcripcion: str = ""
-        self.texto_traducido: str = ""
+        self.transcripcion_traducido: str = ""
         self.emocion_actual: str = ""
         pass
 
@@ -130,11 +131,13 @@ class AnalisisVozInterface(QThread):
     def reconocer_emociones(self, texto):
         """
         Recibe un texto y retorna el tipo de emociones detectadas
-        Retorna un texto de la forma
+        Retorna un texto de forma "[NEU | NEG | POS] 0.999"
+        
         (output=NEU, probas={NEU: 0.000, NEG: 0.000, POS: 0.000}
         """
-        emocion = str(self.sentimientos_analyzer.predict(texto))[14:-1]
-        return emocion
+
+        emocion = self.sentimientos_analyzer.predict(texto)
+        return emocion.output + " " + str('%.3f'%max(emocion.probas.values()))
     
     
     def proceso_main(self) -> None:

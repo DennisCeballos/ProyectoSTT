@@ -60,6 +60,7 @@ class AnalisisVoz_Secuencial(AnalisisVozInterface):
                     # Traducir el texto
                     print("| Traduccion Ingles: ", end='')
                     self.texto_traducido = self.traducir_texto(self.texto_actual)
+                    self.transcripcion_traducido += self.texto_traducido
                     print(self.texto_traducido)
 
                     # Analizar el sentimiento

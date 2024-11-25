@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QLabel, QComboBox, QPushButton, QTextEdit
 from PyQt5 import uic
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QPixmap
 
 from audioPro import *
 
@@ -31,23 +32,30 @@ class MainWindow(QMainWindow):
         self.bt_stop.clicked.connect(self.on_bt_stop_clicked)
         self.cb_inputList.currentIndexChanged.connect(self.on_microphone_selected)
         self.cb_language.currentIndexChanged.connect(self.on_microphone_selected)
-    
+
+        # Configurar imagenes de emociones
+        self.pixmap_positivo = QPixmap('./resources/images/positivo.png')
+        self.pixmap_neutral = QPixmap('./resources/images/neutral.png')
+        self.pixmap_negativo = QPixmap('./resources/images/negativo.png')
+        self.pixmap_unknown = QPixmap('./resources/images/error404.png')
+        self.img_status = self.findChild(QLabel, "img_status")
+
+
         self.show()
 
     def update_ui(self):
         self.tf_textoTraducido.setText(self.analizador_voz.texto_traducido)
         self.tf_textoTranscrito.setText(self.analizador_voz.transcripcion)
-        self.label_4.setText(self.analizador_voz.emocion_actual)
-
-   # Funciones para actualizar la interfaz
-    def actualizar_texto(self, texto):
-        self.tf_textoTranscrito.setText(texto)
-
-    def actualizar_texto_traducido(self, texto):
-        self.tf_textoTraducido.setText(texto)
-
-    def actualizar_emocion(self, emocion):
+        emocion = self.analizador_voz.emocion_actual
         self.label_4.setText(emocion)
+        if emocion[:3] == "NEU":
+            self.img_status.setPixmap(self.pixmap_neutral)
+        elif emocion[:3] == "NEG":
+            self.img_status.setPixmap(self.pixmap_negativo)
+        elif emocion[:3] == "POS":
+            self.img_status.setPixmap(self.pixmap_positivo)
+        else:
+            self.img_status.setPixmap(self.pixmap_unknown)
 
     # Eventos
     def on_bt_grabar_clicked(self):
