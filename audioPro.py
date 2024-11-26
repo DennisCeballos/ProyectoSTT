@@ -12,8 +12,6 @@ import pyaudio
 
 import os
 
-from audioProPipe import AnalisisVoz_Paralelo_MPipe
-
 class AnalisisVoz_Dummy(AnalisisVozInterface):
 
     def proceso_main(self):
@@ -147,6 +145,70 @@ class AnalisisVoz_Paralelo_Features(AnalisisVozInterface):
 
         except KeyboardInterrupt:
             print("Deteniendo transcripción desde el micrófono.")
+
+class AnalisisVoz_Paralelo_ProCons_Threads(AnalisisVozInterface):
+
+    def __init__(self, pyaudio_ref):
+        super().__init__(pyaudio_ref)
+
+        self.iniciado = False
+        self.audio_queue = queue.Queue()
+
+    def work_obtener_audio(self):
+        while self.iniciado:
+            data = self.obtener_audio()
+            self.audio_queue.put(data)
+
+    def procesar_pipeline(self):
+        while self.iniciado:
+            try:
+                if not self.audio_queue.empty():
+                    audio_data = self.audio_queue.get(timeout=1)
+
+                    transcription_actual = self.transcribir_audio(audio_data)
+                    self.texto_actual = transcription_actual
+                    self.transcripcion += transcription_actual
+                    # Traducir el texto
+                    self.texto_traducido = self.traducir_texto(self.texto_actual)
+                    self.transcripcion_traducido += self.texto_traducido
+
+                    # Analizar el sentimiento
+                    self.emocion_actual = self.reconocer_emociones(self.texto_actual)
+
+                    print(f"Transcripción: {self.texto_actual}")
+                    print(f"Traducción: {self.texto_traducido}")
+                    print(f"Emoción: {self.emocion_actual}")
+                    
+                else:
+                    continue
+
+            except queue.Empty:
+                print("Lista vacia, pasando al siguiente")
+                #No pasa nada de esar vacia
+                continue
+
+    def proceso_main(self):
+        """Funcion para iniciar la transcripción usando el microfono como constante entrada de audio"""
+        self.iniciado = True
+
+        hilo_audio = threading.Thread(target=self.work_obtener_audio)
+        hilo_audio.daemon = True
+
+        hilo_pipeline = threading.Thread(target=self.procesar_pipeline)
+        hilo_pipeline.daemon = True
+
+        # Iniciar cada hilo
+        hilo_audio.start()
+        hilo_pipeline.start()
+        
+        try:
+            while self.iniciado:
+                continue
+        except KeyboardInterrupt:
+            print("Deteniendo transcripción desde el micrófono.")
+            self.iniciado = False
+            hilo_audio.join()
+            hilo_pipeline.join()
 
 
 # Funcion Main

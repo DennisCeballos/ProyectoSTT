@@ -17,7 +17,7 @@ CHUNK = 1024              # Numero de frames por buffer
 FORMAT = pyaudio.paInt16  # _Formato de captura de aurio_
 CHANNELS = 1              # Numero de canales de audio (mono)
 RATE = 16000              # Tasa de sonido (16 kHz es necesario para Whisper)
-RECORD_SECONDS = 4       # Duracion de cada grabacion de chunk de audio
+RECORD_SECONDS = 15       # Duracion de cada grabacion de chunk de audio
 
 
 class AnalisisVozInterface(QThread):
