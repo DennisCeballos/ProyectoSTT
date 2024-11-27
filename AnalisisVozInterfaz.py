@@ -17,7 +17,7 @@ CHUNK = 1024              # Numero de frames por buffer
 FORMAT = pyaudio.paInt16  # _Formato de captura de aurio_
 CHANNELS = 1              # Numero de canales de audio (mono)
 RATE = 16000              # Tasa de sonido (16 kHz es necesario para Whisper)
-RECORD_SECONDS = 15       # Duracion de cada grabacion de chunk de audio
+RECORD_SECONDS = 10       # Duracion de cada grabacion de chunk de audio
 
 
 class AnalisisVozInterface(QThread):
@@ -60,6 +60,13 @@ class AnalisisVozInterface(QThread):
         self.transcripcion: str = ""
         self.transcripcion_traducido: str = ""
         self.emocion_actual: str = ""
+
+        #
+        # Variables para testing
+        #
+        self.lista_duracion_audios = []
+        self.lista_tiempoMedido = []
+
         pass
 
     def run(self):
@@ -73,6 +80,7 @@ class AnalisisVozInterface(QThread):
         """
         if self.testing:
             if len(self.lista_audioChunks) >= 1:
+                time.sleep(RECORD_SECONDS)
                 return self.lista_audioChunks.pop(0)
             else:
                 return None
@@ -165,6 +173,8 @@ class AnalisisVozInterface(QThread):
         duracion_audio = librosa.get_duration(path=direccion_audio)
         duracion_transcripcion = end_time - start_time
         print(f"Tiempo de ejecucion de audio de {duracion_audio} segundos ->  {duracion_transcripcion:.2f} segundos")
+        self.lista_duracion_audios.append(duracion_audio)
+        self.lista_tiempoMedido.append(duracion_transcripcion)
 
         # Realizar la comparativa de textos
         similitud = self.comparar_texto_archivo(self.transcripcion, direccion_audio)
@@ -184,7 +194,7 @@ class AnalisisVozInterface(QThread):
         """Compares two texts for similarity using SpaCy and returns the percentage."""
 
         # Cargar el texto desde el archivo
-        with open(nombre_Archivo.replace('.wav', '.txt').replace('.mp3', '.txt'), 'r', encoding='utf-8') as f:
+        with open(nombre_Archivo.replace('.wav', '.txt').replace('.mp3', '.txt').replace('.aac', '.txt'), 'r', encoding='utf-8') as f:
             textoOriginal = f.read()
 
         def preprocess_text(text):
@@ -236,4 +246,55 @@ class AnalisisVozInterface(QThread):
 
         return array_audios
 
+class AnalisisVoz_Secuencial_AnalisisPre(AnalisisVozInterface):
+
+    def proceso_main(self):
+        """ Funcion para iniciar la transcripcion usando el microfono como constante entrada de audio """
+        self.iniciado = True
+        try:
+            while self.iniciado:
+                audio_data = self.obtener_audio()
+                if audio_data is not None:
+
+                    """Se hace un analisis del audio_data ingresado, insertando valores en self.texto_actual, self.texto_traducido y self.emocion_actual"""
+                    # Transcribir audio con el modelo
+                    print("Transcripcion:", end='')
+                    transcription_actual = self.transcribir_audio(audio_data)
+                    self.texto_actual = transcription_actual
+                    self.transcripcion += transcription_actual
+                    print(self.texto_actual)
+
+                    # Traducir el texto
+                    print("| Traduccion Ingles: ", end='')
+                    self.texto_traducido = self.traducir_texto(self.texto_actual)
+                    self.transcripcion_traducido += self.texto_traducido
+                    print(self.texto_traducido)
+
+                    # Analizar el sentimiento
+                    print("| Reconocimiento de emociones: ", end='')
+                    self.emocion_actual = self.reconocer_emociones(self.texto_actual)
+                    print(self.emocion_actual)
+
+                else:
+                    self.iniciado = False
         
+        except KeyboardInterrupt:
+            print("Deteniendo transcripcion desde microfono.")
+
+
+# Funcion Main
+if __name__ == "__main__":
+
+    p_audio = pyaudio.PyAudio()
+
+    TranscripcionManager = AnalisisVoz_Secuencial_AnalisisPre(p_audio)
+
+    audio_file_path = 'audiosTest/'
+
+    #TranscripcionManager.analizar_desde_microfono()
+    '''
+    audio_files = [os.path.join(audio_file_path, f) for f in os.listdir(audio_file_path) if f.endswith(('.wav', '.mp3'))]
+    for file_path in audio_files:
+        TranscripcionManager.test_clase(file_path)
+    '''
+    TranscripcionManager.proceso_main()

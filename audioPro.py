@@ -4,7 +4,7 @@ import random
 import threading
 import time
 
-import mpipe
+import librosa
 import numpy as np
 from AnalisisVozInterfaz import AnalisisVozInterface
 
@@ -203,12 +203,15 @@ class AnalisisVoz_Paralelo_ProCons_Threads(AnalisisVozInterface):
         
         try:
             while self.iniciado:
+                if self.testing and len(self.lista_audioChunks) < 1:
+                    self.iniciado = False
                 continue
         except KeyboardInterrupt:
             print("Deteniendo transcripción desde el micrófono.")
             self.iniciado = False
-            hilo_audio.join()
-            hilo_pipeline.join()
+        
+        hilo_audio.join()
+        hilo_pipeline.join()
 
 
 # Funcion Main
@@ -221,9 +224,9 @@ if __name__ == "__main__":
     audio_file_path = 'audiosTest/'
 
     #TranscripcionManager.analizar_desde_microfono()
-    '''
+    
     audio_files = [os.path.join(audio_file_path, f) for f in os.listdir(audio_file_path) if f.endswith(('.wav', '.mp3'))]
     for file_path in audio_files:
         TranscripcionManager.test_clase(file_path)
-    '''
-    TranscripcionManager.proceso_main()
+    
+    #TranscripcionManager.proceso_main()
